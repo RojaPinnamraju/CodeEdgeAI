@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Editor from '../components/Editor';
 import OutputBox from '../components/OutputBox';
 import { askAI } from '../App';
@@ -31,6 +31,8 @@ const CodeWithAI = () => {
   const inactivityTimer = useRef(null);
   const codeAnalysisTimer = useRef(null);
   const lastActivityRef = useRef(Date.now());
+  const showSuccessMessage = useState(false);
+  const navigate = useNavigate();
 
   const difficulties = {
     easy: 'Easy',
@@ -179,25 +181,20 @@ const CodeWithAI = () => {
     }
   };
 
-  // Reset inactivity timer on any user activity
-  const resetInactivityTimer = () => {
-    lastActivityRef.current = Date.now();
+  const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer.current) {
       clearTimeout(inactivityTimer.current);
     }
-    inactivityTimer.current = setTimeout(checkInactivity, 300000); // 5 minutes
-  };
+    const timer = setTimeout(() => {
+      showSuccessMessage.current = true;
+      setTimeout(() => {
+        showSuccessMessage.current = false;
+        navigate('/');
+      }, 2000);
+    }, 300000); // 5 minutes
+    inactivityTimer.current = timer;
+  }, [inactivityTimer, navigate]);
 
-  // Check for inactivity and prompt user
-  const checkInactivity = async () => {
-    const timeSinceLastActivity = Date.now() - lastActivityRef.current;
-    if (timeSinceLastActivity >= 300000) { // 5 minutes
-      const prompt = "I notice you haven't been active for a while. Would you like to continue working on your code? I can help you with any questions or challenges you're facing.";
-      setChatHistory(prev => [...prev, { type: 'ai', content: prompt }]);
-    }
-  };
-
-  // Set up inactivity monitoring
   useEffect(() => {
     resetInactivityTimer();
     return () => {
@@ -205,18 +202,23 @@ const CodeWithAI = () => {
         clearTimeout(inactivityTimer.current);
       }
     };
-  }, []);
+  }, [resetInactivityTimer]);
 
-  // Monitor user activity
   useEffect(() => {
-    const handleActivity = () => resetInactivityTimer();
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-    return () => {
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
+    const handleUserActivity = () => {
+      resetInactivityTimer();
     };
-  }, []);
+
+    window.addEventListener('mousemove', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('click', handleUserActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('click', handleUserActivity);
+    };
+  }, [resetInactivityTimer]);
 
   const handleAIChat = async (message) => {
     try {
@@ -525,6 +527,11 @@ const CodeWithAI = () => {
           </div>
         </div>
       </div>
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+          Session completed! Redirecting to main page...
+        </div>
+      )}
     </div>
   );
 };
