@@ -108,8 +108,6 @@ function App() {
   const [category, setCategory] = useState('data_structures');
   const [concept, setConcept] = useState('arrays');
   const [difficulty, setDifficulty] = useState('medium');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [solvedProblems, setSolvedProblems] = useState(() => {
     const saved = localStorage.getItem('solvedProblems');
     return saved ? parseInt(saved, 10) : 0;
@@ -180,9 +178,6 @@ function App() {
 
   const generateNewQuestion = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      
       const response = await fetch(`${API_URL}/generate-question?category=${category}&concept=${concept}&difficulty=${difficulty}`);
       const data = await response.json();
       
@@ -196,9 +191,7 @@ function App() {
         throw new Error(data.error);
       }
     } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
+      setOutput(`Error: ${error.message}`);
     }
   };
 

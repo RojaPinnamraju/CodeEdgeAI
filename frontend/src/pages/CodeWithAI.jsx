@@ -9,7 +9,6 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 const CodeWithAI = () => {
   const [code, setCode] = useState('');
   const [output, setOutput] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
   const [currentProblem, setCurrentProblem] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,11 +17,7 @@ const CodeWithAI = () => {
   const [solvedProblems, setSolvedProblems] = useState(0);
   const [lastCodeChange, setLastCodeChange] = useState(Date.now());
   const [isUserStuck, setIsUserStuck] = useState(false);
-  const [suggestedCode, setSuggestedCode] = useState(null);
   const [currentDifficulty, setCurrentDifficulty] = useState('easy');
-  const [useAdvanced, setUseAdvanced] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState(null);
-  const [currentQuestionTitle, setCurrentQuestionTitle] = useState(null);
   const [progress, setProgress] = useState({
     easy_solved: 0,
     medium_solved: 0,
@@ -39,27 +34,6 @@ const CodeWithAI = () => {
     hard: 'Hard'
   };
 
-  const problemCategories = [
-    'arrays_and_hashing',
-    'two_pointers',
-    'sliding_window',
-    'stack',
-    'binary_search',
-    'linked_list',
-    'trees',
-    'tries',
-    'heap_priority_queue',
-    'backtracking',
-    'graphs',
-    'advanced_graphs',
-    '1d_dynamic_programming',
-    '2d_dynamic_programming',
-    'greedy',
-    'intervals',
-    'math_and_geometry',
-    'bit_manipulation'
-  ];
-
   const generateProblem = async () => {
     try {
       setLoading(true);
@@ -71,16 +45,8 @@ const CodeWithAI = () => {
       if (data.success) {
         setCurrentProblem(data.question);
         setCurrentDifficulty(data.difficulty);
-        setCurrentCategory(data.concept);
-        if (data.is_advanced) {
-          const titleMatch = data.question.match(/Title: (.*?)\n/);
-          if (titleMatch) {
-            setCurrentQuestionTitle(titleMatch[1]);
-          }
-        }
         setCode('');
         setOutput('');
-        setAiResponse('');
         setChatHistory([]);
         
         const interviewPrompt = `Hi! Welcome To Code With AI. Let's get started with a ${data.difficulty} problem!`;
@@ -219,7 +185,7 @@ const CodeWithAI = () => {
     };
   }, [resetInactivityTimer]);
 
-  const handleAIChat = async (message) => {
+  const handleAIChat = useCallback(async (message) => {
     try {
       setLoading(true);
       setError(null);
@@ -248,7 +214,6 @@ const CodeWithAI = () => {
       const codeMatch = aiResponse.match(/```python\n([\s\S]*?)```/);
       if (codeMatch) {
         const extractedCode = codeMatch[1].trim();
-        setSuggestedCode(extractedCode);
         setChatHistory(prev => [...prev, { 
           type: 'ai', 
           content: aiResponse,
@@ -258,19 +223,16 @@ const CodeWithAI = () => {
       } else {
         setChatHistory(prev => [...prev, { type: 'ai', content: aiResponse }]);
       }
-      
-      setAiResponse(aiResponse);
     } catch (error) {
       setError(error.message);
       setChatHistory(prev => [...prev, { type: 'error', content: error.message }]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [code, currentProblem, resetInactivityTimer]);
 
   const handleApproveCode = (code) => {
     setCode(code);
-    setSuggestedCode(null);
   };
 
   // Function to analyze user's code and provide feedback
