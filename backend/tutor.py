@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
-from langchain_groq import ChatGroq
+from groq import Groq
 from langchain.chains import LLMChain
 
 # Load environment variables from .env file
@@ -15,11 +15,20 @@ GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 print(f"Loaded GROQ_API_KEY: {GROQ_API_KEY}")
 
 # Initialize Groq client
-llm = ChatGroq(
-    api_key=GROQ_API_KEY,
-    model_name="llama3-70b-8192",
-    temperature=0.7
-)
+client = Groq(api_key=GROQ_API_KEY)
+
+def get_groq_response(prompt):
+    """Get response directly from Groq API"""
+    try:
+        response = client.chat.completions.create(
+            model="llama3-70b-8192",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=1024
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error getting Groq response: {str(e)}"
 
 # Define specialized prompt templates
 DEBUG_TEMPLATE = """You are a helpful coding tutor. A student is having trouble with this code:
@@ -212,10 +221,10 @@ general_prompt = PromptTemplate(
 )
 
 # Create chains
-debug_chain = LLMChain(llm=llm, prompt=debug_prompt)
-explain_chain = LLMChain(llm=llm, prompt=explain_prompt)
-concept_chain = LLMChain(llm=llm, prompt=concept_prompt)
-general_chain = LLMChain(llm=llm, prompt=general_prompt)
+debug_chain = LLMChain(llm=client, prompt=debug_prompt)
+explain_chain = LLMChain(llm=client, prompt=explain_prompt)
+concept_chain = LLMChain(llm=client, prompt=concept_prompt)
+general_chain = LLMChain(llm=client, prompt=general_prompt)
 
 def format_history(history):
     """Format conversation history for the prompt"""
@@ -238,36 +247,37 @@ def get_tutor_response(question_type, problem, code, question, history=None):
         if question.lower().strip() in ['hi', 'hello', 'hey']:
             return "Hi!"
         
-        # Select the appropriate chain based on question type
+        # Select the appropriate template based on question type
         if question_type == 'debug':
-            response = debug_chain.run(
+            prompt = debug_prompt.format(
                 history=formatted_history,
                 problem=problem,
                 code=code,
                 question=question
             )
         elif question_type == 'explain':
-            response = explain_chain.run(
+            prompt = explain_prompt.format(
                 history=formatted_history,
                 problem=problem,
                 code=code,
                 question=question
             )
         elif question_type == 'concept':
-            response = concept_chain.run(
+            prompt = concept_prompt.format(
                 history=formatted_history,
                 problem=problem,
                 code=code,
                 question=question
             )
         else:
-            response = general_chain.run(
+            prompt = general_prompt.format(
                 history=formatted_history,
                 problem=problem,
                 code=code,
                 question=question
             )
         
+        response = get_groq_response(prompt)
         return response.strip()
     except Exception as e:
         return f"Error getting tutor response: {str(e)}" 
