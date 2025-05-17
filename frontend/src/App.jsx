@@ -44,40 +44,50 @@ const Navigation = ({ isChatOpen, setIsChatOpen, generateNewQuestion }) => {
   const isCodeWithAIPage = location.pathname === '/code-with-ai';
 
   return (
-    <div className="flex justify-between items-center mb-4">
-      <h1 className="text-2xl font-bold text-blue-400">CodeEdgeAI</h1>
-      <div className="flex space-x-2">
-        {isCodeWithAIPage ? (
-          <Link
-            to="/"
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md"
-          >
-            Back to Main
-          </Link>
-        ) : (
-          <Link
-            to="/code-with-ai"
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md"
-          >
-            Code with AI
-          </Link>
-        )}
-        {!isCodeWithAIPage && (
-          <>
-            <button
-              onClick={() => setIsChatOpen(!isChatOpen)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md"
+    <div className="bg-gray-900 text-white p-4 rounded-lg shadow-lg mb-6">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-3xl font-bold text-blue-400">CodeEdgeAI</h1>
+          <span className="text-gray-400">|</span>
+          <span className="text-gray-300">Your AI Coding Companion</span>
+        </div>
+        <div className="flex space-x-4">
+          {isCodeWithAIPage ? (
+            <Link
+              to="/"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md flex items-center space-x-2"
             >
-              {isChatOpen ? 'Close Chat' : 'Open Chat'}
-            </button>
-            <button
-              onClick={generateNewQuestion}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md"
+              <span>←</span>
+              <span>Back to Main</span>
+            </Link>
+          ) : (
+            <Link
+              to="/code-with-ai"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md flex items-center space-x-2"
             >
-              Generate Question
-            </button>
-          </>
-        )}
+              <span>🤖</span>
+              <span>Code with AI</span>
+            </Link>
+          )}
+          {!isCodeWithAIPage && (
+            <>
+              <button
+                onClick={() => setIsChatOpen(!isChatOpen)}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md flex items-center space-x-2"
+              >
+                <span>{isChatOpen ? '✕' : '💬'}</span>
+                <span>{isChatOpen ? 'Close Chat' : 'Open Chat'}</span>
+              </button>
+              <button
+                onClick={generateNewQuestion}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-md flex items-center space-x-2"
+              >
+                <span>🎯</span>
+                <span>Generate Question</span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -270,7 +280,7 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-900">
         <div className="container mx-auto px-4 py-8">
           <Routes>
             <Route path="/code-with-ai" element={<CodeWithAI />} />
@@ -278,43 +288,53 @@ function App() {
               path="/"
               element={
                 <>
-                  <Navigation
+                  <Navigation 
                     isChatOpen={isChatOpen}
                     setIsChatOpen={setIsChatOpen}
                     generateNewQuestion={generateNewQuestion}
                   />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <ProblemCard
-                        problem={problem}
-                        category={category}
-                        concept={concept}
-                        difficulty={difficulty}
-                        setCategory={setCategory}
-                        setConcept={setConcept}
-                        setDifficulty={setDifficulty}
-                        categories={categories}
-                        difficulties={difficulties}
-                      />
-                      <Editor
-                        code={code}
-                        setCode={setCode}
-                        runCode={runCode}
-                        submitSolution={submitSolution}
-                      />
-                      <OutputBox output={output} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-6">
+                      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+                        <ProblemCard
+                          problem={problem}
+                          category={category}
+                          concept={concept}
+                          difficulty={difficulty}
+                          setCategory={setCategory}
+                          setConcept={setConcept}
+                          setDifficulty={setDifficulty}
+                          categories={categories}
+                          difficulties={difficulties}
+                        />
+                      </div>
+                      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+                        <Editor
+                          code={code}
+                          setCode={setCode}
+                          runCode={runCode}
+                          submitSolution={submitSolution}
+                        />
+                      </div>
+                      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+                        <OutputBox output={output} />
+                      </div>
                     </div>
                     {isChatOpen && (
-                      <ChatSidebar
-                        aiResponse={aiResponse}
-                        userQuestion={userQuestion}
-                        setUserQuestion={setUserQuestion}
-                        handleAIChat={handleAIChat}
-                        chatHistory={chatHistory}
-                      />
+                      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+                        <ChatSidebar
+                          aiResponse={aiResponse}
+                          userQuestion={userQuestion}
+                          setUserQuestion={setUserQuestion}
+                          handleAIChat={handleAIChat}
+                          chatHistory={chatHistory}
+                        />
+                      </div>
                     )}
                   </div>
-                  <ProgressBar solvedProblems={solvedProblems} />
+                  <div className="mt-6">
+                    <ProgressBar solvedProblems={solvedProblems} />
+                  </div>
                 </>
               }
             />
