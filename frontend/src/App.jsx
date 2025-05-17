@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import Editor from './components/Editor';
 import ChatSidebar from './components/ChatSidebar';
 import OutputBox from './components/OutputBox';
@@ -39,79 +39,37 @@ export const askAI = async (question, type = 'general', problem = '', code = '')
 };
 
 // Navigation component
-const Navigation = ({ isChatOpen, setIsChatOpen, generateNewQuestion }) => {
-  const location = useLocation();
-  const isCodeWithAIPage = location.pathname === '/code-with-ai';
-
+const Navigation = () => {
+  const navigate = useNavigate();
   return (
-    <div className="bg-gray-900 text-white p-4 rounded-lg shadow-lg mb-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-3xl font-bold text-blue-400">CodeEdgeAI</h1>
-          <span className="text-gray-400">|</span>
-          <span className="text-gray-300">Your AI Coding Companion</span>
-        </div>
+    <nav className="bg-gray-900 p-4">
+      <div className="container mx-auto flex justify-between items-center">
+        <Link to="/" className="text-2xl font-bold text-blue-400 hover:text-blue-300 transition-colors">
+          CodeEdgeAI
+        </Link>
         <div className="flex space-x-4">
-          {isCodeWithAIPage ? (
-            <Link
-              to="/"
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md flex items-center space-x-2"
-            >
-              <span>←</span>
-              <span>Back to Main</span>
-            </Link>
-          ) : (
-            <Link
-              to="/code-with-ai"
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md flex items-center space-x-2"
-            >
-              <span>🤖</span>
-              <span>Code with AI</span>
-            </Link>
-          )}
-          {!isCodeWithAIPage && (
-            <>
-              <button
-                onClick={() => setIsChatOpen(!isChatOpen)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md flex items-center space-x-2"
-              >
-                <span>{isChatOpen ? '✕' : '💬'}</span>
-                <span>{isChatOpen ? 'Close Chat' : 'Open Chat'}</span>
-              </button>
-              <button
-                onClick={generateNewQuestion}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-md flex items-center space-x-2"
-              >
-                <span>🎯</span>
-                <span>Generate Question</span>
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => navigate('/code-with-ai')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          >
+            <span>🤖</span>
+            <span>Code with AI</span>
+          </button>
         </div>
       </div>
-    </div>
+    </nav>
   );
 };
 
-function App() {
-  const [code, setCode] = useState('');
+const MainPage = () => {
+  const [showChat, setShowChat] = useState(false);
+  const [problem, setProblem] = useState('');
+  const [code, setCode] = useState('# Write your code here\n');
   const [output, setOutput] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
-  const [problem, setProblem] = useState('Click "Generate Question" to get a new coding challenge!');
-  const [userQuestion, setUserQuestion] = useState('');
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [category, setCategory] = useState('data_structures');
   const [concept, setConcept] = useState('arrays');
   const [difficulty, setDifficulty] = useState('medium');
-  const [solvedProblems, setSolvedProblems] = useState(() => {
-    const saved = localStorage.getItem('solvedProblems');
-    return saved ? parseInt(saved, 10) : 0;
-  });
-  const [solvedProblemIds, setSolvedProblemIds] = useState(() => {
-    const saved = localStorage.getItem('solvedProblemIds');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [chatHistory, setChatHistory] = useState([]);
+  const [problemsSolved, setProblemsSolved] = useState(0);
 
   const categories = {
     data_structures: {
@@ -119,29 +77,25 @@ function App() {
       concepts: {
         arrays: 'Arrays',
         linked_lists: 'Linked Lists',
+        trees: 'Trees',
+        graphs: 'Graphs',
         stacks: 'Stacks',
         queues: 'Queues',
         hash_tables: 'Hash Tables',
-        graphs: 'Graphs',
-        trees: 'Trees',
-        heaps: 'Heaps',
-        tries: 'Tries',
-        segment_trees: 'Segment Trees',
-        fenwick_trees: 'Fenwick Trees',
-        disjoint_set: 'Disjoint Set Union'
+        heaps: 'Heaps'
       }
     },
     algorithms: {
       name: 'Algorithms',
       concepts: {
-        sorting: 'Sorting Algorithms',
-        searching: 'Searching Algorithms',
-        divide_conquer: 'Divide and Conquer',
-        greedy: 'Greedy Algorithms',
+        sorting: 'Sorting',
+        searching: 'Searching',
         dynamic_programming: 'Dynamic Programming',
+        greedy: 'Greedy',
+        backtracking: 'Backtracking',
+        divide_and_conquer: 'Divide and Conquer',
         graph_algorithms: 'Graph Algorithms',
-        string_algorithms: 'String Algorithms',
-        number_theory: 'Number Theory'
+        string_algorithms: 'String Algorithms'
       }
     }
   };
@@ -152,195 +106,148 @@ function App() {
     hard: 'Hard'
   };
 
-  // Load saved progress on component mount
-  useEffect(() => {
-    const savedProblems = localStorage.getItem('solvedProblems');
-    const savedProblemIds = localStorage.getItem('solvedProblemIds');
-    
-    if (savedProblems) {
-      setSolvedProblems(parseInt(savedProblems, 10));
-    }
-    if (savedProblemIds) {
-      setSolvedProblemIds(JSON.parse(savedProblemIds));
-    }
-  }, []);
-
-  // Save progress whenever it changes
-  useEffect(() => {
-    localStorage.setItem('solvedProblems', solvedProblems.toString());
-    localStorage.setItem('solvedProblemIds', JSON.stringify(solvedProblemIds));
-  }, [solvedProblems, solvedProblemIds]);
-
   const generateNewQuestion = async () => {
     try {
-      const response = await fetch(`${API_URL}/generate-question?category=${category}&concept=${concept}&difficulty=${difficulty}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setProblem(data.question);
-        setCode('');
-        setOutput('');
-        setAiResponse('');
-        setChatHistory([]);
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (error) {
-      setOutput(`Error: ${error.message}`);
-    }
-  };
-
-  const runCode = async () => {
-    try {
-      if (!code.trim()) {
-        setOutput('Error: Please write some code before running');
-        return;
-      }
-
-      const response = await fetch(`${API_URL}/run`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code }),
-      });
-      
-      const data = await response.json();
-      if (data.success) {
-        setOutput(data.output);
-      } else {
-        setOutput(`Error: ${data.error}\n${data.traceback || ''}`);
-      }
-    } catch (error) {
-      setOutput(`Error: ${error.message}`);
-    }
-  };
-
-  const submitSolution = async () => {
-    try {
-      if (!code.trim()) {
-        setOutput('Error: Please write some code before submitting');
-        return;
-      }
-
-      // First run the code to check if it works
-      const runResponse = await fetch(`${API_URL}/run`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code }),
-      });
-      
-      const runData = await runResponse.json();
-      if (!runData.success) {
-        setOutput(`Error: ${runData.error}\n${runData.traceback || ''}`);
-        return;
-      }
-
-      // If code runs successfully, submit it
-      const submitResponse = await fetch(`${API_URL}/submit`, {
+      const response = await fetch('http://localhost:5000/generate-question', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          code,
-          problem,
           category,
           concept,
           difficulty
         }),
       });
 
-      const submitData = await submitResponse.json();
-      if (submitData.success) {
-        setOutput('Solution submitted successfully!');
-        if (!solvedProblemIds.includes(submitData.problem_id)) {
-          setSolvedProblems(prev => prev + 1);
-          setSolvedProblemIds(prev => [...prev, submitData.problem_id]);
-        }
-      } else {
-        setOutput(`Error: ${submitData.error}`);
+      if (!response.ok) {
+        throw new Error('Failed to generate question');
       }
+
+      const data = await response.json();
+      setProblem(data.problem);
+      setCode('# Write your code here\n');
+      setOutput('');
     } catch (error) {
-      setOutput(`Error: ${error.message}`);
+      setOutput('Error: ' + error.message);
     }
   };
 
-  const handleAIChat = async (message) => {
+  const runCode = async () => {
     try {
-      const response = await askAI(message, 'general', problem, code);
-      setAiResponse(response);
-      setChatHistory(prev => [...prev, { question: message, response }]);
+      const response = await fetch('http://localhost:5000/run-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to run code');
+      }
+
+      const data = await response.json();
+      setOutput(data.output);
     } catch (error) {
-      setAiResponse(`Error: ${error.message}`);
+      setOutput('Error: ' + error.message);
+    }
+  };
+
+  const submitSolution = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/submit-solution', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          category,
+          concept,
+          difficulty
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit solution');
+      }
+
+      const data = await response.json();
+      setOutput(data.message);
+      if (data.correct) {
+        setProblemsSolved(prev => prev + 1);
+      }
+    } catch (error) {
+      setOutput('Error: ' + error.message);
     }
   };
 
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-900">
-        <div className="container mx-auto px-4 py-8">
-          <Routes>
-            <Route path="/code-with-ai" element={<CodeWithAI />} />
-            <Route
-              path="/"
-              element={
-                <>
-                  <Navigation 
-                    isChatOpen={isChatOpen}
-                    setIsChatOpen={setIsChatOpen}
-                    generateNewQuestion={generateNewQuestion}
-                  />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-6">
-                      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
-                        <ProblemCard
-                          problem={problem}
-                          category={category}
-                          concept={concept}
-                          difficulty={difficulty}
-                          setCategory={setCategory}
-                          setConcept={setConcept}
-                          setDifficulty={setDifficulty}
-                          categories={categories}
-                          difficulties={difficulties}
-                        />
-                      </div>
-                      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
-                        <Editor
-                          code={code}
-                          setCode={setCode}
-                          runCode={runCode}
-                          submitSolution={submitSolution}
-                        />
-                      </div>
-                      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
-                        <OutputBox output={output} />
-                      </div>
-                    </div>
-                    {isChatOpen && (
-                      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
-                        <ChatSidebar
-                          aiResponse={aiResponse}
-                          userQuestion={userQuestion}
-                          setUserQuestion={setUserQuestion}
-                          handleAIChat={handleAIChat}
-                          chatHistory={chatHistory}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-6">
-                    <ProgressBar solvedProblems={solvedProblems} />
-                  </div>
-                </>
-              }
+    <div className="min-h-screen bg-gray-900 text-white">
+      <Navigation />
+      <div className="container mx-auto p-4">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-blue-400 mb-2">CodeEdgeAI</h1>
+          <p className="text-xl text-gray-300">Your AI Coding Companion</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-12rem)]">
+          <div className="flex flex-col h-full">
+            <ProblemCard
+              problem={problem}
+              category={category}
+              concept={concept}
+              difficulty={difficulty}
+              setCategory={setCategory}
+              setConcept={setConcept}
+              setDifficulty={setDifficulty}
+              categories={categories}
+              difficulties={difficulties}
             />
-          </Routes>
+          </div>
+          <div className="flex flex-col h-full">
+            <Editor
+              code={code}
+              setCode={setCode}
+              runCode={runCode}
+              submitSolution={submitSolution}
+            />
+            <div className="mt-4">
+              <OutputBox output={output} />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={generateNewQuestion}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-lg font-medium"
+          >
+            <span>🎯</span>
+            <span>Generate Question</span>
+          </button>
+        </div>
+
+        <div className="mt-4 text-center">
+          <p className="text-lg text-gray-300">
+            Problems Solved: <span className="text-blue-400 font-bold">{problemsSolved}</span>
+          </p>
         </div>
       </div>
+
+      <ChatSidebar isOpen={showChat} onClose={() => setShowChat(false)} />
+    </div>
+  );
+};
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<MainPage />} />
+        <Route path="/code-with-ai" element={<CodeWithAI />} />
+      </Routes>
     </Router>
   );
 }
