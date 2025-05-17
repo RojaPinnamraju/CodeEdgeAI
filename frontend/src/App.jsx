@@ -12,7 +12,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 // Export the askAI function
 export const askAI = async (question, type = 'general', problem = '', code = '') => {
   try {
-    const response = await fetch('http://localhost:5001/ai', {
+    const response = await fetch(`${API_URL}/ai`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ export const askAI = async (question, type = 'general', problem = '', code = '')
         type,
         problem,
         code,
-        user_id: 'user_123' // Add a user_id to track conversation history
+        user_id: 'user_123'
       }),
     });
 
@@ -40,7 +40,7 @@ export const askAI = async (question, type = 'general', problem = '', code = '')
 
 const getVideoRecommendations = async (concept, difficulty) => {
   try {
-    const response = await fetch(`http://localhost:5001/api/video-recommendations?concept=${concept}&difficulty=${difficulty}`);
+    const response = await fetch(`${API_URL}/api/video-recommendations?concept=${concept}&difficulty=${difficulty}`);
     const data = await response.json();
     if (data.success) {
       return data.recommendations;
@@ -236,7 +236,7 @@ function App() {
       }
 
       // First run the code to check if it works
-      const runResponse = await fetch('http://localhost:5001/run', {
+      const runResponse = await fetch(`${API_URL}/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -250,20 +250,31 @@ function App() {
         return;
       }
 
-      // If code runs successfully, update progress
-      setSolvedProblems(prev => prev + 1);
-      setSolvedProblemIds(prev => [...prev, problem]);
-      
-      // Add success message to chat
-      setChatHistory(prev => [...prev, { 
-        type: 'ai', 
-        content: "Great job! Your solution has been submitted successfully. You can generate a new problem or continue practicing!",
-        isSuccessReaction: true
-      }]);
+      // If code runs successfully, submit it
+      const submitResponse = await fetch(`${API_URL}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          problem,
+          category,
+          concept,
+          difficulty
+        }),
+      });
 
-      // Clear the output and code
-      setOutput('');
-      setCode('');
+      const submitData = await submitResponse.json();
+      if (submitData.success) {
+        setOutput('Solution submitted successfully!');
+        if (!solvedProblemIds.includes(submitData.problem_id)) {
+          setSolvedProblems(prev => prev + 1);
+          setSolvedProblemIds(prev => [...prev, submitData.problem_id]);
+        }
+      } else {
+        setOutput(`Error: ${submitData.error}`);
+      }
     } catch (error) {
       setOutput(`Error: ${error.message}`);
     }
@@ -271,203 +282,67 @@ function App() {
 
   const handleAIChat = async (message) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      setChatHistory(prev => [...prev, { type: 'user', content: message }]);
-      
-      const aiResponse = await askAI(message, 'general', problem, code);
-      
-      setChatHistory(prev => [...prev, { type: 'ai', content: aiResponse }]);
-      setAiResponse(aiResponse);
+      const response = await askAI(message, 'general', problem, code);
+      setAiResponse(response);
+      setChatHistory(prev => [...prev, { question: message, response }]);
     } catch (error) {
-      setError(error.message);
-      setChatHistory(prev => [...prev, { type: 'error', content: error.message }]);
-    } finally {
-      setLoading(false);
+      setAiResponse(`Error: ${error.message}`);
     }
   };
 
   return (
     <Router>
-      <Routes>
-        <Route path="/code-with-ai" element={<CodeWithAI />} />
-        <Route path="/" element={
-          <div className="flex h-screen bg-gray-900 overflow-hidden">
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col p-4 overflow-hidden">
-              <Navigation 
-                isChatOpen={isChatOpen}
-                setIsChatOpen={setIsChatOpen}
-                generateNewQuestion={generateNewQuestion}
-              />
-              
-              {/* Category and Concept Filters */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">Category</label>
-                  <select
-                    value={category}
-                    onChange={(e) => {
-                      setCategory(e.target.value);
-                      const firstConcept = Object.keys(categories[e.target.value].concepts)[0];
-                      setConcept(firstConcept);
-                    }}
-                    className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {Object.entries(categories).map(([key, value]) => (
-                      <option key={key} value={key} className="bg-gray-800">{value.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">Concept</label>
-                  <select
-                    value={concept}
-                    onChange={(e) => setConcept(e.target.value)}
-                    className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {Object.entries(categories[category].concepts).map(([key, value]) => (
-                      <option key={key} value={key} className="bg-gray-800">{value}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Difficulty Level Filters */}
-              <div className="flex space-x-2 mb-4">
-                {Object.entries(difficulties).map(([key, value]) => (
-                  <button
-                    key={key}
-                    onClick={() => setDifficulty(key)}
-                    className={`px-4 py-2 rounded-lg transition-colors duration-200 shadow-md ${
-                      difficulty === key 
-                        ? key === 'easy' 
-                          ? 'bg-green-600 text-white hover:bg-green-700' 
-                          : key === 'medium' 
-                            ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
-                            : 'bg-red-600 text-white hover:bg-red-700'
-                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                    }`}
-                  >
-                    {value}
-                  </button>
-                ))}
-              </div>
-              
-              {/* Progress Bar */}
-              <div className="mb-2">
-                <ProgressBar solvedProblems={solvedProblems} />
-              </div>
-              
-              {/* Problem Card */}
-              <div className="mb-2 max-h-[20vh] overflow-y-auto">
-                <ProblemCard problem={problem} />
-              </div>
-              
-              {/* Editor and Output */}
-              <div className="flex-1 flex flex-col gap-2 min-h-0">
-                <div className="flex-1 bg-gray-800 rounded-lg overflow-hidden">
-                  <Editor code={code} setCode={setCode} />
-                </div>
-                <div className="flex gap-4">
-                  <button
-                    onClick={runCode}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md"
-                  >
-                    Run Code
-                  </button>
-                  <button
-                    onClick={submitSolution}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-md"
-                  >
-                    Submit Solution
-                  </button>
-                </div>
-                <div className="h-32">
-                  <OutputBox output={output} />
-                </div>
-              </div>
-            </div>
-            
-            {/* AI Chat Sidebar */}
-            {isChatOpen && (
-              <div className="w-96 bg-gray-800 shadow-lg flex flex-col overflow-hidden">
-                <div className="p-4 h-full flex flex-col">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-blue-400">AI Tutor</h2>
-                    <button
-                      onClick={() => setIsChatOpen(false)}
-                      className="text-gray-400 hover:text-white transition-colors duration-200"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto mb-4">
-                    {loading && (
-                      <div className="flex justify-center items-center mb-4">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                      </div>
-                    )}
-
-                    {error && (
-                      <div className="bg-red-900/50 p-4 rounded-lg mb-4">
-                        <p className="text-red-400">{error}</p>
-                      </div>
-                    )}
-
-                    {/* Chat History */}
-                    <div className="space-y-4">
-                      {chatHistory.map((message, index) => (
-                        <div key={index} className={`p-4 rounded-lg ${
-                          message.type === 'user' 
-                            ? 'bg-blue-900/50 ml-8 text-gray-200' 
-                            : message.type === 'error'
-                              ? 'bg-red-900/50 text-red-400'
-                              : 'bg-gray-700/50 mr-8 text-gray-200'
-                        }`}>
-                          <p className="whitespace-pre-wrap">{message.content}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-auto">
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        value={userQuestion}
-                        onChange={(e) => setUserQuestion(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            handleAIChat(userQuestion);
-                            setUserQuestion('');
-                          }
-                        }}
-                        placeholder="Ask the AI tutor..."
-                        className="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      <div className="min-h-screen bg-gray-100">
+        <div className="container mx-auto px-4 py-8">
+          <Routes>
+            <Route path="/code-with-ai" element={<CodeWithAI />} />
+            <Route
+              path="/"
+              element={
+                <>
+                  <Navigation
+                    isChatOpen={isChatOpen}
+                    setIsChatOpen={setIsChatOpen}
+                    generateNewQuestion={generateNewQuestion}
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <ProblemCard
+                        problem={problem}
+                        category={category}
+                        concept={concept}
+                        difficulty={difficulty}
+                        setCategory={setCategory}
+                        setConcept={setConcept}
+                        setDifficulty={setDifficulty}
+                        categories={categories}
+                        difficulties={difficulties}
                       />
-                      <button
-                        onClick={() => {
-                          handleAIChat(userQuestion);
-                          setUserQuestion('');
-                        }}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md"
-                      >
-                        Send
-                      </button>
+                      <Editor
+                        code={code}
+                        setCode={setCode}
+                        runCode={runCode}
+                        submitSolution={submitSolution}
+                      />
+                      <OutputBox output={output} />
                     </div>
+                    {isChatOpen && (
+                      <ChatSidebar
+                        aiResponse={aiResponse}
+                        userQuestion={userQuestion}
+                        setUserQuestion={setUserQuestion}
+                        handleAIChat={handleAIChat}
+                        chatHistory={chatHistory}
+                      />
+                    )}
                   </div>
-                </div>
-              </div>
-            )}
-          </div>
-        } />
-      </Routes>
+                  <ProgressBar solvedProblems={solvedProblems} />
+                </>
+              }
+            />
+          </Routes>
+        </div>
+      </div>
     </Router>
   );
 }
