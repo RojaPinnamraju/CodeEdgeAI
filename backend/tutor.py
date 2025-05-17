@@ -1,8 +1,6 @@
 import os
 from dotenv import load_dotenv
-from langchain.prompts import PromptTemplate
 from groq import Groq
-from langchain.chains import LLMChain
 
 # Load environment variables from .env file
 load_dotenv()
@@ -16,19 +14,6 @@ print(f"Loaded GROQ_API_KEY: {GROQ_API_KEY}")
 
 # Initialize Groq client
 client = Groq(api_key=GROQ_API_KEY)
-
-def get_groq_response(prompt):
-    """Get response directly from Groq API"""
-    try:
-        response = client.chat.completions.create(
-            model="llama3-70b-8192",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-            max_tokens=1024
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error getting Groq response: {str(e)}"
 
 # Define specialized prompt templates
 DEBUG_TEMPLATE = """You are a helpful coding tutor. A student is having trouble with this code:
@@ -199,33 +184,6 @@ print(example_function(test_input))  # Actual output: [actual output]
 
 Be direct and answer only what's asked. If more information is needed, ask for it. Remember previous interactions to maintain context."""
 
-# Create prompt templates
-debug_prompt = PromptTemplate(
-    input_variables=["history", "problem", "code", "question"],
-    template=DEBUG_TEMPLATE
-)
-
-explain_prompt = PromptTemplate(
-    input_variables=["history", "problem", "code", "question"],
-    template=EXPLAIN_TEMPLATE
-)
-
-concept_prompt = PromptTemplate(
-    input_variables=["history", "problem", "code", "question"],
-    template=CONCEPT_TEMPLATE
-)
-
-general_prompt = PromptTemplate(
-    input_variables=["history", "problem", "code", "question"],
-    template=GENERAL_TEMPLATE
-)
-
-# Create chains
-debug_chain = LLMChain(llm=client, prompt=debug_prompt)
-explain_chain = LLMChain(llm=client, prompt=explain_prompt)
-concept_chain = LLMChain(llm=client, prompt=concept_prompt)
-general_chain = LLMChain(llm=client, prompt=general_prompt)
-
 def format_history(history):
     """Format conversation history for the prompt"""
     if not history:
@@ -236,6 +194,19 @@ def format_history(history):
         formatted.append(f"Q{i}: {interaction['question']}")
         formatted.append(f"A{i}: {interaction['response']}")
     return "\n".join(formatted)
+
+def get_groq_response(prompt):
+    """Get response directly from Groq API"""
+    try:
+        response = client.chat.completions.create(
+            model="llama3-70b-8192",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=1024
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error getting Groq response: {str(e)}"
 
 def get_tutor_response(question_type, problem, code, question, history=None):
     """Get response from the appropriate tutor chain"""
@@ -249,28 +220,28 @@ def get_tutor_response(question_type, problem, code, question, history=None):
         
         # Select the appropriate template based on question type
         if question_type == 'debug':
-            prompt = debug_prompt.format(
+            prompt = DEBUG_TEMPLATE.format(
                 history=formatted_history,
                 problem=problem,
                 code=code,
                 question=question
             )
         elif question_type == 'explain':
-            prompt = explain_prompt.format(
+            prompt = EXPLAIN_TEMPLATE.format(
                 history=formatted_history,
                 problem=problem,
                 code=code,
                 question=question
             )
         elif question_type == 'concept':
-            prompt = concept_prompt.format(
+            prompt = CONCEPT_TEMPLATE.format(
                 history=formatted_history,
                 problem=problem,
                 code=code,
                 question=question
             )
         else:
-            prompt = general_prompt.format(
+            prompt = GENERAL_TEMPLATE.format(
                 history=formatted_history,
                 problem=problem,
                 code=code,
