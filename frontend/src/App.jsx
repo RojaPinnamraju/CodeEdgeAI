@@ -38,21 +38,6 @@ export const askAI = async (question, type = 'general', problem = '', code = '')
   }
 };
 
-const getVideoRecommendations = async (concept, difficulty) => {
-  try {
-    const response = await fetch(`${API_URL}/api/video-recommendations?concept=${concept}&difficulty=${difficulty}`);
-    const data = await response.json();
-    if (data.success) {
-      return data.recommendations;
-    } else {
-      throw new Error(data.error || 'Failed to get video recommendations');
-    }
-  } catch (error) {
-    console.error('Error getting video recommendations:', error);
-    return [];
-  }
-};
-
 // Navigation component
 const Navigation = ({ isChatOpen, setIsChatOpen, generateNewQuestion }) => {
   const location = useLocation();
