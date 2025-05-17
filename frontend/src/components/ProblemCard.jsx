@@ -12,84 +12,64 @@ const ProblemCard = ({
   difficulties
 }) => {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col space-y-3">
-        <h2 className="text-lg font-bold text-blue-400">Problem Settings</h2>
-        
-        {/* Category Selection */}
-        <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-300">Category</label>
-          <div className="grid grid-cols-2 gap-1">
+    <div className="flex flex-col h-full">
+      <div className="flex space-x-4 mb-4">
+        {/* Category Dropdown */}
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-300 mb-1">Category</label>
+          <select
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setConcept(Object.keys(categories[e.target.value].concepts)[0]);
+            }}
+            className="w-full p-2 bg-gray-700 text-gray-200 rounded text-sm border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
             {Object.entries(categories).map(([key, value]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  setCategory(key);
-                  setConcept(Object.keys(value.concepts)[0]);
-                }}
-                className={`p-2 rounded text-xs font-medium transition-colors duration-200 ${
-                  category === key
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
+              <option key={key} value={key}>
                 {value.name}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
-        {/* Concept Selection */}
-        <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-300">Concept</label>
-          <div className="grid grid-cols-3 gap-1">
+        {/* Concept Dropdown */}
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-300 mb-1">Concept</label>
+          <select
+            value={concept}
+            onChange={(e) => setConcept(e.target.value)}
+            className="w-full p-2 bg-gray-700 text-gray-200 rounded text-sm border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
             {Object.entries(categories[category].concepts).map(([key, value]) => (
-              <button
-                key={key}
-                onClick={() => setConcept(key)}
-                className={`p-1.5 rounded text-xs font-medium transition-colors duration-200 ${
-                  concept === key
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
+              <option key={key} value={key}>
                 {value}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
-        {/* Difficulty Selection */}
-        <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-300">Difficulty</label>
-          <div className="grid grid-cols-3 gap-1">
+        {/* Difficulty Dropdown */}
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-300 mb-1">Difficulty</label>
+          <select
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value)}
+            className="w-full p-2 bg-gray-700 text-gray-200 rounded text-sm border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
             {Object.entries(difficulties).map(([key, value]) => (
-              <button
-                key={key}
-                onClick={() => setDifficulty(key)}
-                className={`p-2 rounded text-xs font-medium transition-colors duration-200 ${
-                  difficulty === key
-                    ? key === 'easy'
-                      ? 'bg-green-600 text-white'
-                      : key === 'medium'
-                      ? 'bg-yellow-600 text-white'
-                      : 'bg-red-600 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
+              <option key={key} value={key}>
                 {value}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         </div>
       </div>
 
       {/* Problem Statement */}
-      <div className="space-y-1">
-        <h2 className="text-lg font-bold text-blue-400">Problem Statement</h2>
-        <div className="bg-gray-900 p-3 rounded">
-          <p className="text-gray-200 text-sm whitespace-pre-wrap">{problem}</p>
-        </div>
+      <div className="flex-1 bg-gray-900 rounded p-3 overflow-y-auto">
+        <h2 className="text-lg font-bold text-blue-400 mb-2">Problem Statement</h2>
+        <p className="text-gray-200 text-sm whitespace-pre-wrap">{problem}</p>
       </div>
     </div>
   );

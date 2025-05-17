@@ -3,8 +3,8 @@ import MonacoEditor from '@monaco-editor/react';
 
 const Editor = ({ code, setCode, runCode, submitSolution }) => {
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between items-center">
+    <div className="flex flex-col h-full">
+      <div className="flex justify-between items-center mb-2">
         <h2 className="text-lg font-bold text-blue-400">Code Editor</h2>
         <div className="flex space-x-2">
           <button
@@ -23,7 +23,7 @@ const Editor = ({ code, setCode, runCode, submitSolution }) => {
           </button>
         </div>
       </div>
-      <div className="h-[300px] border border-gray-700 rounded overflow-hidden">
+      <div className="flex-1 border border-gray-700 rounded overflow-hidden">
         <MonacoEditor
           height="100%"
           defaultLanguage="python"
