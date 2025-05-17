@@ -18,8 +18,7 @@ print(f"Loaded GROQ_API_KEY: {GROQ_API_KEY}")
 llm = ChatGroq(
     api_key=GROQ_API_KEY,
     model_name="llama3-70b-8192",
-    temperature=0.7,
-    max_tokens=1024
+    temperature=0.7
 )
 
 # Define specialized prompt templates
