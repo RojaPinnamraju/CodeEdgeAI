@@ -30,8 +30,7 @@ const CodeWithAI = () => {
   });
   const inactivityTimer = useRef(null);
   const codeAnalysisTimer = useRef(null);
-  const lastActivityRef = useRef(Date.now());
-  const showSuccessMessage = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const navigate = useNavigate();
 
   const difficulties = {
@@ -186,14 +185,14 @@ const CodeWithAI = () => {
       clearTimeout(inactivityTimer.current);
     }
     const timer = setTimeout(() => {
-      showSuccessMessage.current = true;
+      setShowSuccessMessage(true);
       setTimeout(() => {
-        showSuccessMessage.current = false;
+        setShowSuccessMessage(false);
         navigate('/');
       }, 2000);
     }, 300000); // 5 minutes
     inactivityTimer.current = timer;
-  }, [inactivityTimer, navigate]);
+  }, [navigate, setShowSuccessMessage]);
 
   useEffect(() => {
     resetInactivityTimer();
@@ -275,7 +274,7 @@ const CodeWithAI = () => {
   };
 
   // Function to analyze user's code and provide feedback
-  const analyzeCode = async () => {
+  const analyzeCode = useCallback(async () => {
     if (!code.trim()) return;
 
     try {
@@ -294,19 +293,19 @@ const CodeWithAI = () => {
     } catch (error) {
       console.error('Error analyzing code:', error);
     }
-  };
+  }, [code, currentProblem]);
 
   // Function to check if user is stuck
-  const checkUserProgress = () => {
+  const checkUserProgress = useCallback(() => {
     const timeSinceLastChange = Date.now() - lastCodeChange;
     if (timeSinceLastChange > 5 * 60 * 1000 && !isUserStuck) { // 5 minutes
       setIsUserStuck(true);
       handleAIChat("I notice you've been working on this problem for a while. Would you like some guidance or have any specific questions about the approach?");
     }
-  };
+  }, [lastCodeChange, isUserStuck, handleAIChat]);
 
   // Function to react to successful code execution
-  const reactToSuccess = async () => {
+  const reactToSuccess = useCallback(async () => {
     if (output.includes('Success')) {
       const response = await askAI(
         `The candidate successfully solved the problem: ${currentProblem}\n\nTheir solution:\n${code}`,
@@ -321,7 +320,7 @@ const CodeWithAI = () => {
         isSuccessReaction: true
       }]);
     }
-  };
+  }, [output, currentProblem, code]);
 
   // Effect for code change tracking
   useEffect(() => {
@@ -348,14 +347,14 @@ const CodeWithAI = () => {
         clearInterval(codeAnalysisTimer.current);
       }
     };
-  }, [code]);
+  }, [code, checkUserProgress, analyzeCode]);
 
   // Effect for success reaction
   useEffect(() => {
     if (output) {
       reactToSuccess();
     }
-  }, [output]);
+  }, [output, reactToSuccess]);
 
   useEffect(() => {
     generateProblem();
