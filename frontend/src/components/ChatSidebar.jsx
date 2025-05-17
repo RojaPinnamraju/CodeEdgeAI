@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+
 const ChatSidebar = ({ isOpen, onClose, problem, code }) => {
   const [userQuestion, setUserQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
@@ -13,7 +15,8 @@ const ChatSidebar = ({ isOpen, onClose, problem, code }) => {
     setChatHistory(prev => [...prev, { question, response: 'Thinking...' }]);
     
     try {
-      const response = await fetch('http://localhost:5001/ai', {
+      console.log('Sending chat request:', { question, problem, code });
+      const response = await fetch(`${API_URL}/ai`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -27,7 +30,17 @@ const ChatSidebar = ({ isOpen, onClose, problem, code }) => {
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
+      console.log('Chat response:', data);
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to get AI response');
+      }
       
       // Update the last response in chat history
       setChatHistory(prev => {
@@ -39,7 +52,7 @@ const ChatSidebar = ({ isOpen, onClose, problem, code }) => {
       console.error('Error in chat:', error);
       setChatHistory(prev => {
         const newHistory = [...prev];
-        newHistory[newHistory.length - 1].response = 'Sorry, I encountered an error. Please try again.';
+        newHistory[newHistory.length - 1].response = `Error: ${error.message}. Please make sure the backend server is running at ${API_URL}`;
         return newHistory;
       });
     } finally {
