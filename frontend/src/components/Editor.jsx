@@ -1,84 +1,50 @@
-import React, { useEffect, useRef } from 'react';
-import Editor from '@monaco-editor/react';
+import React from 'react';
+import MonacoEditor from '@monaco-editor/react';
 
-const CodeEditor = ({ code, setCode }) => {
-  const editorRef = useRef(null);
-  const containerRef = useRef(null);
-  const animationFrameRef = useRef(null);
-  const resizeObserverRef = useRef(null);
-
-  const handleEditorDidMount = (editor) => {
-    editorRef.current = editor;
-  };
-
-  const handleResize = () => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    animationFrameRef.current = requestAnimationFrame(() => {
-      if (editorRef.current) {
-        try {
-          editorRef.current.layout();
-        } catch (error) {
-          console.error('Error during layout:', error);
-        }
-      }
-    });
-  };
-
-  useEffect(() => {
-    resizeObserverRef.current = new ResizeObserver(() => {
-      handleResize();
-    });
-
-    if (containerRef.current) {
-      resizeObserverRef.current.observe(containerRef.current);
-    }
-
-    handleResize();
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-      }
-    };
-  }, []);
-
+const Editor = ({ code, setCode, runCode, submitSolution }) => {
   return (
-    <div ref={containerRef} className="h-full w-full">
-      <Editor
-        height="100%"
-        width="100%"
-        defaultLanguage="python"
-        value={code}
-        onChange={setCode}
-        theme="vs-dark"
-        options={{
-          minimap: { enabled: false },
-          fontSize: 14,
-          lineNumbers: 'on',
-          roundedSelection: false,
-          scrollBeyondLastLine: false,
-          readOnly: false,
-          automaticLayout: false,
-          padding: { top: 16, bottom: 16 },
-          renderLineHighlight: 'all',
-          scrollbar: {
-            vertical: 'visible',
-            horizontal: 'visible',
-            useShadows: false,
-            verticalScrollbarSize: 10,
-            horizontalScrollbarSize: 10
-          }
-        }}
-        onMount={handleEditorDidMount}
-      />
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-blue-400">Code Editor</h2>
+        <div className="flex space-x-2">
+          <button
+            onClick={runCode}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md flex items-center space-x-2"
+          >
+            <span>▶️</span>
+            <span>Run Code</span>
+          </button>
+          <button
+            onClick={submitSolution}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-md flex items-center space-x-2"
+          >
+            <span>✓</span>
+            <span>Submit Solution</span>
+          </button>
+        </div>
+      </div>
+      <div className="h-[400px] border border-gray-700 rounded-lg overflow-hidden">
+        <MonacoEditor
+          height="100%"
+          defaultLanguage="python"
+          theme="vs-dark"
+          value={code}
+          onChange={setCode}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: 'on',
+            roundedSelection: false,
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            tabSize: 4,
+            wordWrap: 'on',
+            padding: { top: 16, bottom: 16 },
+          }}
+        />
+      </div>
     </div>
   );
 };
 
-export default CodeEditor; 
+export default Editor; 
