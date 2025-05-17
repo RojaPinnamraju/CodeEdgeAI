@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import Editor from './components/Editor';
 import ChatSidebar from './components/ChatSidebar';
 import OutputBox from './components/OutputBox';
 import ProblemCard from './components/ProblemCard';
-import ProgressBar from './components/ProgressBar';
 import CodeWithAI from './pages/CodeWithAI';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
