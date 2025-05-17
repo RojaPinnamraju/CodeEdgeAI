@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from groq import Groq
+import groq
 
 # Load environment variables from .env file
 load_dotenv()
@@ -13,10 +13,7 @@ GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 print(f"Loaded GROQ_API_KEY: {GROQ_API_KEY}")
 
 # Initialize Groq client
-client = Groq(
-    api_key=GROQ_API_KEY,
-    base_url="https://api.groq.com/v1"
-)
+client = groq.Client(api_key=GROQ_API_KEY)
 
 # Define specialized prompt templates
 DEBUG_TEMPLATE = """You are a helpful coding tutor. A student is having trouble with this code:
