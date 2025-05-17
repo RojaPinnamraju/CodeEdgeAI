@@ -12,7 +12,7 @@ const ProblemCard = ({
   difficulties
 }) => {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-800 rounded-lg p-4">
       <div className="flex space-x-4 mb-4">
         {/* Category Dropdown */}
         <div className="flex-1">
@@ -67,9 +67,13 @@ const ProblemCard = ({
       </div>
 
       {/* Problem Statement */}
-      <div className="flex-1 bg-gray-900 rounded p-3 overflow-y-auto">
-        <h2 className="text-lg font-bold text-blue-400 mb-2">Problem Statement</h2>
-        <p className="text-gray-200 text-sm whitespace-pre-wrap">{problem}</p>
+      <div className="flex-1 border-2 border-gray-700 rounded-lg overflow-hidden bg-gray-900">
+        <div className="p-4 h-full overflow-y-auto">
+          <h2 className="text-lg font-bold text-blue-400 mb-4">Problem Statement</h2>
+          <div className="prose prose-invert max-w-none">
+            <p className="text-gray-200 text-sm whitespace-pre-wrap">{problem}</p>
+          </div>
+        </div>
       </div>
     </div>
   );
