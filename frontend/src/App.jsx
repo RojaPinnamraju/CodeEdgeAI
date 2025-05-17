@@ -62,13 +62,15 @@ const Navigation = () => {
 
 const MainPage = () => {
   const [showChat, setShowChat] = useState(false);
-  const [problem, setProblem] = useState('');
+  const [problem, setProblem] = useState('Click "Generate Question" to get a new coding challenge!');
   const [code, setCode] = useState('# Write your code here\n');
   const [output, setOutput] = useState('');
   const [category, setCategory] = useState('data_structures');
   const [concept, setConcept] = useState('arrays');
   const [difficulty, setDifficulty] = useState('medium');
   const [problemsSolved, setProblemsSolved] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const categories = {
     data_structures: {
@@ -107,7 +109,9 @@ const MainPage = () => {
 
   const generateNewQuestion = async () => {
     try {
-      const response = await fetch('http://localhost:5000/generate-question', {
+      setIsLoading(true);
+      setError('');
+      const response = await fetch(`${API_URL}/generate-question`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -124,17 +128,23 @@ const MainPage = () => {
       }
 
       const data = await response.json();
-      setProblem(data.problem);
+      setProblem(data.problem || 'No problem generated. Please try again.');
       setCode('# Write your code here\n');
       setOutput('');
     } catch (error) {
-      setOutput('Error: ' + error.message);
+      console.error('Error generating question:', error);
+      setError('Failed to generate question. Please try again.');
+      setProblem('Error: Could not generate a new question. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const runCode = async () => {
     try {
-      const response = await fetch('http://localhost:5000/run-code', {
+      setIsLoading(true);
+      setError('');
+      const response = await fetch(`${API_URL}/run-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,15 +157,21 @@ const MainPage = () => {
       }
 
       const data = await response.json();
-      setOutput(data.output);
+      setOutput(data.output || 'No output generated.');
     } catch (error) {
-      setOutput('Error: ' + error.message);
+      console.error('Error running code:', error);
+      setError('Failed to run code. Please try again.');
+      setOutput('Error: Could not run the code. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const submitSolution = async () => {
     try {
-      const response = await fetch('http://localhost:5000/submit-solution', {
+      setIsLoading(true);
+      setError('');
+      const response = await fetch(`${API_URL}/submit-solution`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,12 +189,16 @@ const MainPage = () => {
       }
 
       const data = await response.json();
-      setOutput(data.message);
+      setOutput(data.message || 'Solution submitted successfully!');
       if (data.correct) {
         setProblemsSolved(prev => prev + 1);
       }
     } catch (error) {
-      setOutput('Error: ' + error.message);
+      console.error('Error submitting solution:', error);
+      setError('Failed to submit solution. Please try again.');
+      setOutput('Error: Could not submit the solution. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -190,6 +210,12 @@ const MainPage = () => {
           <h1 className="text-4xl font-bold text-blue-400 mb-2">CodeEdgeAI</h1>
           <p className="text-xl text-gray-300">Your AI Coding Companion</p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-4 bg-red-900 text-white rounded-lg">
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-12rem)]">
           <div className="flex flex-col h-full">
@@ -221,10 +247,13 @@ const MainPage = () => {
         <div className="mt-4 flex justify-center">
           <button
             onClick={generateNewQuestion}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-lg font-medium"
+            disabled={isLoading}
+            className={`px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-lg font-medium ${
+              isLoading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             <span>🎯</span>
-            <span>Generate Question</span>
+            <span>{isLoading ? 'Generating...' : 'Generate Question'}</span>
           </button>
         </div>
 
