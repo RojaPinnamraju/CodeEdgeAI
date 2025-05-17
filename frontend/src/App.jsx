@@ -69,8 +69,6 @@ const MainPage = () => {
   const [concept, setConcept] = useState('arrays');
   const [difficulty, setDifficulty] = useState('medium');
   const [problemsSolved, setProblemsSolved] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const categories = {
     data_structures: {
@@ -109,8 +107,6 @@ const MainPage = () => {
 
   const generateNewQuestion = async () => {
     try {
-      setIsLoading(true);
-      setError('');
       const response = await fetch(`${API_URL}/generate-question`, {
         method: 'POST',
         headers: {
@@ -133,17 +129,12 @@ const MainPage = () => {
       setOutput('');
     } catch (error) {
       console.error('Error generating question:', error);
-      setError('Failed to generate question. Please try again.');
       setProblem('Error: Could not generate a new question. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const runCode = async () => {
     try {
-      setIsLoading(true);
-      setError('');
       const response = await fetch(`${API_URL}/run-code`, {
         method: 'POST',
         headers: {
@@ -160,17 +151,12 @@ const MainPage = () => {
       setOutput(data.output || 'No output generated.');
     } catch (error) {
       console.error('Error running code:', error);
-      setError('Failed to run code. Please try again.');
       setOutput('Error: Could not run the code. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const submitSolution = async () => {
     try {
-      setIsLoading(true);
-      setError('');
       const response = await fetch(`${API_URL}/submit-solution`, {
         method: 'POST',
         headers: {
@@ -195,10 +181,7 @@ const MainPage = () => {
       }
     } catch (error) {
       console.error('Error submitting solution:', error);
-      setError('Failed to submit solution. Please try again.');
       setOutput('Error: Could not submit the solution. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -211,14 +194,8 @@ const MainPage = () => {
           <p className="text-xl text-gray-300">Your AI Coding Companion</p>
         </div>
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-900 text-white rounded-lg">
-            {error}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-12rem)]">
-          <div className="flex flex-col h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="flex flex-col">
             <ProblemCard
               problem={problem}
               category={category}
@@ -231,7 +208,7 @@ const MainPage = () => {
               difficulties={difficulties}
             />
           </div>
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col">
             <Editor
               code={code}
               setCode={setCode}
@@ -247,13 +224,10 @@ const MainPage = () => {
         <div className="mt-4 flex justify-center">
           <button
             onClick={generateNewQuestion}
-            disabled={isLoading}
-            className={`px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-lg font-medium ${
-              isLoading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-lg font-medium"
           >
             <span>🎯</span>
-            <span>{isLoading ? 'Generating...' : 'Generate Question'}</span>
+            <span>Generate Question</span>
           </button>
         </div>
 
